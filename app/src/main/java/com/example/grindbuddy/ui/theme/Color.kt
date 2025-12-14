@@ -10,3 +10,11 @@ val GrindRed = Color(0xFFFF5252)         // Stop/Danger
 val GrindWhite = Color(0xFFFFFFFF)       // Primary Text
 val GrindGray = Color(0xFF888888)        // Secondary Text
 val GrindAccent = Color(0xFF9C7DE1)      // AI/Premium Feature
+
+val SoftBackground = Color(0xFFF7F8F8) // Very light gray-blue
+val CardWhite = Color(0xFFFFFFFF)
+val TextBlack = Color(0xFF1D1617)
+val TextGray = Color(0xFF7B6F72)
+val PrimaryPurple = Color(0xFF92A3FD) // Light Periwinkle (like the reference)
+val SecondaryBlue = Color(0xFF9DCEFF)
+val ProgressTrack = Color(0xFFF7F8F8) // Faint ring background
