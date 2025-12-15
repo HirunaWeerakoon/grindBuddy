@@ -48,7 +48,12 @@ fun TimerScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 1. TOP BAR (Reusable!)
-        UserStatsBar(xp = currentXp, coins = currentCoins, streak = 12)
+        UserStatsBar(
+            xp = currentXp,
+            coins = currentCoins,
+            streak = 12,
+            onShopClick = onShopClick
+        )
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -137,10 +142,5 @@ fun TimerScreen(
             icon = { Text("🎉", fontSize = 32.sp) }
         )
     }
-    Button(
-        onClick = onShopClick,
-
-    ) {
-        Text("Open Shop")
-    }
+    
 }

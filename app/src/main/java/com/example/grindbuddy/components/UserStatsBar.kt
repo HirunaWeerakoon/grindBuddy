@@ -12,14 +12,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import com.example.grindbuddy.presentation.theme.*
 
 @Composable
 fun UserStatsBar(
     xp: Int,
     coins: Int,
-    streak: Int
+    streak: Int,
+    onShopClick: () -> Unit
 ) {
+    val level = (xp / 100) + 1
+    val xpInCurrentLevel = xp % 100
+    val progress = xpInCurrentLevel / 100f
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -41,7 +48,7 @@ fun UserStatsBar(
                 color = TextBlack
             )
             Text(
-                text = "Level: ${xp / 100 + 1}",
+                text = "Level: $level",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 color = TextBlack
@@ -52,9 +59,10 @@ fun UserStatsBar(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .background(Color.White, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White)
+                .clickable { onShopClick() }
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-            // Add a shadow if you want, or keep it flat
         ) {
             Text(text = "🔥 $streak  |  💰 $coins", fontWeight = FontWeight.Bold, color = TextBlack)
         }

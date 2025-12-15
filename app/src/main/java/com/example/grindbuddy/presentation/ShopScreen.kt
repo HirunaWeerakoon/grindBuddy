@@ -22,7 +22,8 @@ fun ShopScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(GrindSurface)
-            .padding(16.dp),
+            .systemBarsPadding()
+            .padding(16.dp)
     ) {
         Text(text = "🛒 THE SHOP", fontSize = 32.sp, color = GrindWhite)
 
