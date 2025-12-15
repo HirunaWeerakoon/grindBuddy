@@ -6,15 +6,15 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.grindbuddy.ui.shopScreen
+import com.example.grindbuddy.ui.TimerScreen
+import com.example.grindbuddy.ui.ShopScreen
 import com.example.grindbuddy.viewmodel.TimerViewModel
 
 @Composable
-fun Navigation(
+fun Navigation( // You might want to rename this to "GrindNavigation" to match previous steps
     navController: NavHostController,
     viewModel: TimerViewModel
 ) {
-    // Collect data needed for multiple screens here (optional)
     val coins by viewModel.totalCoins.collectAsState()
 
     NavHost(
@@ -22,7 +22,8 @@ fun Navigation(
         startDestination = Screen.Timer.route
     ){
         composable(route = Screen.Timer.route){
-            timerScreen(
+            // FIX 1: Use Capital 'T' (TimerScreen)
+            TimerScreen(
                 viewModel = viewModel,
                 onShopClick = {
                     navController.navigate(Screen.Shop.route)
@@ -30,16 +31,12 @@ fun Navigation(
             )
         }
         composable(route = Screen.Shop.route){
-            shopScreen(
-                viewModel = viewModel,
+            ShopScreen(
                 coins = coins,
                 onBackClick = {
-                    navController.navigate(Screen.Timer.route)
+                    navController.popBackStack()
                 }
             )
-
         }
-
-
     }
 }

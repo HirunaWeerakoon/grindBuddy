@@ -14,7 +14,7 @@ import com.example.grindbuddy.presentation.theme.GrindSurface
 import com.example.grindbuddy.presentation.theme.GrindWhite
 
 @Composable
-fun shopScreen(
+fun ShopScreen(
     coins: Int,
     onBackClick: () -> Unit
 ) {

@@ -137,7 +137,10 @@ fun TimerScreen(
             icon = { Text("🎉", fontSize = 32.sp) }
         )
     }
-    Button(onClick = onShopClick) {
+    Button(
+        onClick = onShopClick,
+
+    ) {
         Text("Open Shop")
     }
 }
