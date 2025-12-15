@@ -1,7 +1,5 @@
 package com.example.grindbuddy.ui
 
-import android.R.attr.level
-import android.R.attr.progress
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -27,7 +25,8 @@ import com.example.grindbuddy.viewmodel.TimerViewModel
 
 @Composable
 fun TimerScreen(
-    viewModel: TimerViewModel = viewModel(factory = TimerViewModel.Factory)
+    viewModel: TimerViewModel = viewModel(factory = TimerViewModel.Factory),
+    onShopClick: () -> Unit
 ) {
     // Collect Data
     val timeLeftSeconds by viewModel.timeLeft.collectAsState()
@@ -35,6 +34,10 @@ fun TimerScreen(
     val isSessionFinished by viewModel.isSessionFinished.collectAsState()
     val currentXp by viewModel.totalXp.collectAsState()
     val currentCoins by viewModel.totalCoins.collectAsState()
+
+    val level= (currentXp/100)+1
+    val progress= (currentXp%100)/100f
+
 
     Column(
         modifier = Modifier
@@ -133,5 +136,8 @@ fun TimerScreen(
             },
             icon = { Text("🎉", fontSize = 32.sp) }
         )
+    }
+    Button(onClick = onShopClick) {
+        Text("Open Shop")
     }
 }

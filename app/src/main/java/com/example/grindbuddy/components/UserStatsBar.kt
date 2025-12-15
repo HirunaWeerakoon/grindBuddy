@@ -40,6 +40,12 @@ fun UserStatsBar(
                 fontWeight = FontWeight.Bold,
                 color = TextBlack
             )
+            Text(
+                text = "Level: ${xp / 100 + 1}",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = TextBlack
+            )
         }
 
         // RIGHT: The Stats (Coins & Fire) in a nice container
