@@ -39,18 +39,39 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         viewModel = viewModel
                     )
+                }
             }
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun GreetingPreview() {
+        GrindBuddyTheme {
+            ShopScreen(
+                coins = 100,
+                onBackClick = {}
+            )
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    GrindBuddyTheme {
-        ShopScreen(
-            coins = 100,
-            onBackClick = {}
-        )
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
