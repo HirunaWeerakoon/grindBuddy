@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import com.example.grindbuddy.GrindBuddyApplication
 import com.example.grindbuddy.data.FocusSession
 import com.example.grindbuddy.data.SessionDao
+import kotlinx.coroutines.flow.map
 
 // 1. Add 'repository' to the constructor
 class TimerViewModel(private val repository: UserStatsRepository,private val sessionDao: SessionDao) : ViewModel() {
@@ -83,6 +84,7 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
         }
     }
 
+
     private fun resetSession() {
         pauseTimer()
         _timeLeft.value = 5L // Reset to 5s for testing
@@ -113,4 +115,37 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+    val weeklyStats = sessionHistory.map { history ->
+        calculateWeeklyStats(history)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    // 2. THE LOGIC
+    private fun calculateWeeklyStats(history: List<FocusSession>): List<Pair<String, Int>> {
+        val stats = mutableListOf<Pair<String, Int>>()
+        val today = System.currentTimeMillis()
+        val oneDayMillis = 24 * 60 * 60 * 1000L
+
+        // Loop backwards for the last 7 days (6 days ago -> Today)
+        for (i in 6 downTo 0) {
+            val targetDayStart = today - (i * oneDayMillis)
+            // Simple way to get the "Day Name" (e.g., "Mon")
+            val dayName = java.text.SimpleDateFormat("EEEEE", java.util.Locale.getDefault())
+                .format(java.util.Date(targetDayStart))
+
+            // Sum up minutes for this specific day
+            // (This logic is a bit simplified, but perfect for starting out)
+            val minutesThatDay = history.filter { session ->
+                val sessionDay = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault())
+                    .format(java.util.Date(session.dateTimestamp))
+                sessionDay == dayName
+            }.sumOf { it.durationMinutes }
+
+            stats.add(dayName to minutesThatDay)
+        }
+        return stats
+    }
 }

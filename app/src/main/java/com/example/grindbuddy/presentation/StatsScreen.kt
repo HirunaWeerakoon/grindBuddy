@@ -26,6 +26,7 @@ import java.util.Locale
 @Composable
 fun StatsScreen(
     history: List<FocusSession>,
+    weeklyStats: List<Pair<String, Int>>,
     onBackClick: () -> Unit
 ) {
     // 1. STATE: Which tab is selected? (0 = Weekly, 1 = Monthly, 2 = History)
@@ -73,7 +74,7 @@ fun StatsScreen(
 
         // 3. THE SWITCHER
         when (selectedTab) {
-            0 -> WeeklyGraphView()  // Weekly
+            0 -> WeeklyGraphView(weeklyStats)  // Weekly
             1 -> MonthlyGraphView() // Monthly (Placeholder)
             2 -> HistoryListView(history) // The List
         }
@@ -83,15 +84,88 @@ fun StatsScreen(
 // --- SUB-COMPONENTS ---
 
 @Composable
-fun WeeklyGraphView() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(GrindSurface, RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center
+fun WeeklyGraphView(data: List<Pair<String, Int>>) {
+    // 1. Math: Find the max value to scale the bars
+
+    val maxDataValue = data.maxOfOrNull { it.second } ?: 0
+    val safeMax = maxOf(maxDataValue, 400)
+
+    // We define a fixed height for the drawing area so bars know how tall to be
+    val graphHeight = 150.dp
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = GrindSurface),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
     ) {
-        Text("📈 Graph Coming Soon", color = Color.Gray)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // --- LEFT: Y-AXIS (0m to Max) ---
+            Column(
+                modifier = Modifier
+                    .height(graphHeight)
+                    .padding(end = 12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "${safeMax}m", fontSize = 12.sp, color = Color.Gray)
+                Text(text = "${safeMax / 2}m", fontSize = 12.sp, color = Color.Gray)
+                Text(text = "0m", fontSize = 12.sp, color = Color.Gray)
+            }
+
+            // --- RIGHT: BARS + DAYS ---
+            Column(modifier = Modifier.weight(1f)) {
+
+                // PART 1: The Bars (Aligned to Bottom)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(graphHeight), // Fixed drawing height
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom // Grow from floor
+                ) {
+                    data.forEach { (_, minutes) ->
+                        // Calculate exact height: (Minutes / Max) * TotalHeight
+                        val heightFraction = minutes / safeMax.toFloat()
+                        val barHeight = graphHeight * heightFraction
+
+                        // If 0 minutes, show a tiny dot so user sees the day exists
+                        val actualBarHeight = if (minutes > 0) barHeight else 4.dp
+                        val barColor = if (minutes > 0) PrimaryPurple else Color.DarkGray.copy(alpha = 0.3f)
+
+                        Box(
+                            modifier = Modifier
+                                .width(16.dp) // Thinner bars look cleaner
+                                .height(actualBarHeight)
+                                .background(
+                                    color = barColor,
+                                    shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+                                )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // PART 2: The X-Axis Labels (Days)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    data.forEach { (day, _) ->
+                        Text(
+                            text = day, // "Mon", "Tue"
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.width(24.dp), // Fixed width to center text
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

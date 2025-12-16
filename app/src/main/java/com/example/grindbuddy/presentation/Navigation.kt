@@ -44,9 +44,11 @@ fun Navigation( // You might want to rename this to "GrindNavigation" to match p
         composable(route = Screen.Stats.route) {
             // We need to collect the history from the ViewModel
             val history by viewModel.sessionHistory.collectAsState()
+            val weeklyStats by viewModel.weeklyStats.collectAsState()
 
             StatsScreen(
                 history = history,
+                weeklyStats = weeklyStats,
                 onBackClick = { navController.popBackStack() }
             )
 
