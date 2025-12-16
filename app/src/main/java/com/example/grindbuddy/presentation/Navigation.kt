@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.grindbuddy.ui.TimerScreen
 import com.example.grindbuddy.ui.ShopScreen
+import com.example.grindbuddy.ui.StatsScreen
 import com.example.grindbuddy.viewmodel.TimerViewModel
 
 @Composable
@@ -22,11 +23,13 @@ fun Navigation( // You might want to rename this to "GrindNavigation" to match p
         startDestination = Screen.Timer.route
     ){
         composable(route = Screen.Timer.route){
-            // FIX 1: Use Capital 'T' (TimerScreen)
             TimerScreen(
                 viewModel = viewModel,
                 onShopClick = {
                     navController.navigate(Screen.Shop.route)
+                },
+                onStatsClick = { // <--- 3. ADD THIS HANDLER
+                    navController.navigate(Screen.Stats.route)
                 }
             )
         }
@@ -37,6 +40,16 @@ fun Navigation( // You might want to rename this to "GrindNavigation" to match p
                     navController.popBackStack()
                 }
             )
+        }
+        composable(route = Screen.Stats.route) {
+            // We need to collect the history from the ViewModel
+            val history by viewModel.sessionHistory.collectAsState()
+
+            StatsScreen(
+                history = history,
+                onBackClick = { navController.popBackStack() }
+            )
+
         }
     }
 }

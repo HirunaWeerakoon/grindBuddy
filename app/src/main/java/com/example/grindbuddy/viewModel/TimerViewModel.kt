@@ -13,9 +13,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.grindbuddy.GrindBuddyApplication
+import com.example.grindbuddy.data.FocusSession
+import com.example.grindbuddy.data.SessionDao
 
 // 1. Add 'repository' to the constructor
-class TimerViewModel(private val repository: UserStatsRepository) : ViewModel() {
+class TimerViewModel(private val repository: UserStatsRepository,private val sessionDao: SessionDao) : ViewModel() {
 
     private val _timeLeft = MutableStateFlow(5L) // Still in Test Mode (5 sec)
     val timeLeft = _timeLeft.asStateFlow()
@@ -68,6 +71,14 @@ class TimerViewModel(private val repository: UserStatsRepository) : ViewModel() 
         viewModelScope.launch {
             repository.addXp(50)     // +50 XP
             repository.addCoins(10)  // +10 Coins (New!)
+
+            val session = FocusSession(
+                dateTimestamp = System.currentTimeMillis(), // Current time
+                durationMinutes = 25,                       // Hardcoded for now
+                xpEarned = 50
+            )
+            sessionDao.insertSession(session)
+
             resetSession()
         }
     }
@@ -90,11 +101,16 @@ class TimerViewModel(private val repository: UserStatsRepository) : ViewModel() 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                // This creates the Repo using the Application Context
-                val context = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as android.app.Application).applicationContext
-                val repository = UserStatsRepository(context)
-                TimerViewModel(repository)
-            }
+                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as GrindBuddyApplication)
+                val repository = UserStatsRepository(application.applicationContext)
+                val sessionDao = application.database.sessionDao()
+                TimerViewModel(repository, sessionDao)            }
         }
     }
+    val sessionHistory = sessionDao.getAllSessions()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 }

@@ -19,6 +19,7 @@ import com.example.grindbuddy.components.MascotMood
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.grindbuddy.components.TimerCircle
 import com.example.grindbuddy.components.UserStatsBar
+import com.example.grindbuddy.presentation.Screen
 import com.example.grindbuddy.presentation.theme.PrimaryPurple
 import com.example.grindbuddy.presentation.theme.SoftBackground
 import com.example.grindbuddy.viewmodel.TimerViewModel
@@ -26,7 +27,8 @@ import com.example.grindbuddy.viewmodel.TimerViewModel
 @Composable
 fun TimerScreen(
     viewModel: TimerViewModel = viewModel(factory = TimerViewModel.Factory),
-    onShopClick: () -> Unit
+    onShopClick: () -> Unit,
+    onStatsClick: () -> Unit
 ) {
     // Collect Data
     val timeLeftSeconds by viewModel.timeLeft.collectAsState()
@@ -88,6 +90,9 @@ fun TimerScreen(
         ) {
             GrindMascot(mood = if (isTimerRunning) MascotMood.FOCUSED else MascotMood.HAPPY)
             Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = onStatsClick) {
+                Text(text="stat screen")
+            }
             Card(
                 shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
