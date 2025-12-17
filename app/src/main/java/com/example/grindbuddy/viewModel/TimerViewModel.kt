@@ -5,23 +5,29 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.grindbuddy.GrindBuddyApplication // <--- Make sure this import exists
+import com.example.grindbuddy.data.FocusSession
+import com.example.grindbuddy.data.SessionDao
 import com.example.grindbuddy.data.UserStatsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.grindbuddy.GrindBuddyApplication
-import com.example.grindbuddy.data.FocusSession
-import com.example.grindbuddy.data.SessionDao
-import kotlinx.coroutines.flow.map
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-// 1. Add 'repository' to the constructor
-class TimerViewModel(private val repository: UserStatsRepository,private val sessionDao: SessionDao) : ViewModel() {
+// 1. We added 'sessionDao' to the constructor
+class TimerViewModel(
+    private val repository: UserStatsRepository,
+    private val sessionDao: SessionDao
+) : ViewModel() {
 
-    private val _timeLeft = MutableStateFlow(5L) // Still in Test Mode (5 sec)
+    private val _timeLeft = MutableStateFlow(5L) // Test Mode (5 sec)
     val timeLeft = _timeLeft.asStateFlow()
 
     private val _isRunning = MutableStateFlow(false)
@@ -30,8 +36,7 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
     private val _isSessionFinished = MutableStateFlow(false)
     val isSessionFinished = _isSessionFinished.asStateFlow()
 
-    // 2. EXPOSE XP TO UI
-    // We convert the Repository's Flow into a StateFlow so Compose can read it easily
+    // --- DATASTORE (Sticky Notes) ---
     val totalXp = repository.totalXp.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -41,6 +46,25 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = 0
+    )
+
+    // --- DATABASE (The Excel Sheet) ---
+
+    // A. The Raw List (For the "History" Tab)
+    val sessionHistory = sessionDao.getAllSessions()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    // B. The Graph Data (For the "Weekly" Tab)
+    val weeklyStats = sessionHistory.map { history ->
+        calculateWeeklyStats(history)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
     )
 
     private var timerJob: Job? = null
@@ -67,15 +91,16 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
         timerJob?.cancel()
     }
 
-    // 3. CLAIM REWARD FUNCTION
     fun claimReward() {
         viewModelScope.launch {
-            repository.addXp(50)     // +50 XP
-            repository.addCoins(10)  // +10 Coins (New!)
+            // 1. Update DataStore (Sticky Notes)
+            repository.addXp(50)
+            repository.addCoins(10)
 
+            // 2. Update Database (Excel Sheet) <--- THIS WAS MISSING
             val session = FocusSession(
-                dateTimestamp = System.currentTimeMillis(), // Current time
-                durationMinutes = 25,                       // Hardcoded for now
+                dateTimestamp = System.currentTimeMillis(),
+                durationMinutes = 25, // Hardcoded for now
                 xpEarned = 50
             )
             sessionDao.insertSession(session)
@@ -84,10 +109,9 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
         }
     }
 
-
     private fun resetSession() {
         pauseTimer()
-        _timeLeft.value = 5L // Reset to 5s for testing
+        _timeLeft.value = 5L
         _isSessionFinished.value = false
     }
 
@@ -98,54 +122,46 @@ class TimerViewModel(private val repository: UserStatsRepository,private val ses
         return String.format("%02d:%02d", minutes, seconds)
     }
 
-
-    // 4. FACTORY (Boilerplate to inject the Repository)
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as GrindBuddyApplication)
-                val repository = UserStatsRepository(application.applicationContext)
-                val sessionDao = application.database.sessionDao()
-                TimerViewModel(repository, sessionDao)            }
-        }
-    }
-    val sessionHistory = sessionDao.getAllSessions()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-    val weeklyStats = sessionHistory.map { history ->
-        calculateWeeklyStats(history)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
-
-    // 2. THE LOGIC
+    // --- HELPER FUNCTION: Calculate Graph Data ---
     private fun calculateWeeklyStats(history: List<FocusSession>): List<Pair<String, Int>> {
         val stats = mutableListOf<Pair<String, Int>>()
         val today = System.currentTimeMillis()
         val oneDayMillis = 24 * 60 * 60 * 1000L
 
-        // Loop backwards for the last 7 days (6 days ago -> Today)
+        // Loop backwards for the last 7 days
         for (i in 6 downTo 0) {
             val targetDayStart = today - (i * oneDayMillis)
-            // Simple way to get the "Day Name" (e.g., "Mon")
-            val dayName = java.text.SimpleDateFormat("EEEEE", java.util.Locale.getDefault())
-                .format(java.util.Date(targetDayStart))
 
-            // Sum up minutes for this specific day
-            // (This logic is a bit simplified, but perfect for starting out)
+
+            val dayName = SimpleDateFormat("EEE", Locale.getDefault())
+                .format(Date(targetDayStart))
+                .take(2)
+
+
             val minutesThatDay = history.filter { session ->
-                val sessionDay = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault())
-                    .format(java.util.Date(session.dateTimestamp))
+                val sessionDay = SimpleDateFormat("EEE", Locale.getDefault())
+                    .format(Date(session.dateTimestamp))
+                    .take(2)
                 sessionDay == dayName
             }.sumOf { it.durationMinutes }
 
             stats.add(dayName to minutesThatDay)
         }
         return stats
+    }
+
+    // --- FACTORY ---
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as GrindBuddyApplication)
+                val repository = UserStatsRepository(application.applicationContext)
+
+                // Get the DAO from the Database <--- THIS WAS MISSING
+                val sessionDao = application.database.sessionDao()
+
+                TimerViewModel(repository, sessionDao)
+            }
+        }
     }
 }
