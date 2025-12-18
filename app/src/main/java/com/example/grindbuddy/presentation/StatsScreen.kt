@@ -90,8 +90,8 @@ fun StatsScreen(
             1 -> MonthlyGraphView() // Monthly (Placeholder)
             2 -> HistoryListView(history) // The List
         }
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) { // <--- ADD SCROLLING!
-            WeeklyGraphView(weeklyStats)
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+
 
             Spacer(modifier = Modifier.height(20.dp))
             Text("🏆 ACTIVE QUESTS", color = Color.White, fontWeight = FontWeight.Bold)

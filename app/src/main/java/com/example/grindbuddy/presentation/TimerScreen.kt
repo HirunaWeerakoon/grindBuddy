@@ -36,6 +36,7 @@ fun TimerScreen(
     val isSessionFinished by viewModel.isSessionFinished.collectAsState()
     val currentXp by viewModel.totalXp.collectAsState()
     val currentCoins by viewModel.totalCoins.collectAsState()
+    val currentStreak by viewModel.currentStreak.collectAsState()
 
     val level= (currentXp/100)+1
     val progress= (currentXp%100)/100f
@@ -53,7 +54,7 @@ fun TimerScreen(
         UserStatsBar(
             xp = currentXp,
             coins = currentCoins,
-            streak = 12,
+            streak = currentStreak,
             onShopClick = onShopClick
         )
 

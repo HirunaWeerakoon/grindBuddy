@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -147,6 +148,7 @@ class TimerViewModel(
             // 1. Update DataStore (Sticky Notes)
             repository.addXp(50)
             repository.addCoins(10)
+            updateStreakLogic()
 
             // 2. Update Database (Excel Sheet) <--- THIS WAS MISSING
             val session = FocusSession(
@@ -172,6 +174,7 @@ class TimerViewModel(
         val seconds = totalSeconds % 60
         return String.format("%02d:%02d", minutes, seconds)
     }
+
 
     // --- HELPER FUNCTION: Calculate Graph Data ---
     private fun calculateWeeklyStats(history: List<FocusSession>): List<Pair<String, Int>> {
@@ -201,6 +204,7 @@ class TimerViewModel(
         return stats
     }
 
+
     // --- FACTORY ---
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -213,6 +217,46 @@ class TimerViewModel(
 
                 TimerViewModel(repository, sessionDao)
             }
+        }
+    }
+    // --- STREAK ALGORITHM ---
+    private suspend fun updateStreakLogic() {
+        // 1. Get the last saved date and streak
+        // "first()" grabs the current value from the Flow just once (without listening forever)
+        val lastDate = repository.lastStudyDate.first()
+        val currentStreak = repository.currentStreak.first()
+
+        // 2. Calculate "Today" and "Yesterday" (Strip out the time, keep only date)
+        val calendar = java.util.Calendar.getInstance()
+        val today = calendar.timeInMillis
+
+        // Helper to strip time:
+        fun getStartOfDay(time: Long): Long {
+            val cal = java.util.Calendar.getInstance()
+            cal.timeInMillis = time
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            cal.set(java.util.Calendar.MINUTE, 0)
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+            return cal.timeInMillis
+        }
+
+        val todayStart = getStartOfDay(today)
+        val lastDateStart = getStartOfDay(lastDate)
+
+        // 3. The Logic Tree
+        if (todayStart == lastDateStart) {
+            // Case A: You already studied today. No change.
+            return
+        }
+
+        val oneDayMillis = 24 * 60 * 60 * 1000L
+        if (todayStart == lastDateStart + oneDayMillis) {
+            // Case B: You studied yesterday! Streak goes UP.
+            repository.updateStreak(currentStreak + 1, today)
+        } else {
+            // Case C: You missed a day (or it's your first day). Reset to 1.
+            repository.updateStreak(1, today)
         }
     }
 }
