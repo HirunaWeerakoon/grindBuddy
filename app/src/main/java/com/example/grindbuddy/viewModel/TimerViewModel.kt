@@ -69,6 +69,50 @@ class TimerViewModel(
 
     private var timerJob: Job? = null
 
+    val dailyLevel = repository.dailyLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
+
+    val minutesToday = weeklyStats.map { list ->
+        // Find today's entry (e.g. "Tu")
+        val todayName = SimpleDateFormat("EEE", Locale.getDefault()).format(Date()).take(2)
+        list.find { it.first == todayName }?.second ?: 0
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val dailyTarget = dailyLevel.map { level ->
+        level * 60 // Example: Level 1 = 60 mins, Level 4 = 240 mins
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 60)
+
+    val weeklyLevel = repository.weeklyLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
+
+    val minutesThisWeek = weeklyStats.map { list ->
+        list.sumOf { it.second } // Sum up all the bars
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val weeklyTarget = weeklyLevel.map { level ->
+        level * 300 // Example: Level 1 = 300 mins (5 hours), Level 2 = 600 mins...
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 300)
+
+    // --- STREAK QUEST LOGIC ---
+    val currentStreak = repository.currentStreak.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val streakTarget = currentStreak.map { streak ->
+        if (streak < 3) 3 else streak + 3 // Simple rule: Keep chasing +3 days
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3)
+
+    fun claimWeeklyQuest() {
+        viewModelScope.launch {
+            repository.addXp(200)
+            repository.addCoins(100)
+            repository.increaseWeeklyLevel()
+        }
+    }
+
+    fun claimStreakQuest() {
+        viewModelScope.launch {
+            repository.addXp(50)
+            repository.addCoins(20)
+        }
+    }
+
     fun toggleTimer() {
         if (_isRunning.value) pauseTimer() else startTimer()
     }
@@ -83,6 +127,13 @@ class TimerViewModel(
             }
             _isRunning.value = false
             _isSessionFinished.value = true
+        }
+    }
+    fun claimDailyQuest() {
+        viewModelScope.launch {
+            repository.addXp(100)      // Big Reward!
+            repository.addCoins(50)
+            repository.increaseDailyLevel() // Level Up! (Next target will be harder)
         }
     }
 

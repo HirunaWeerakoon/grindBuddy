@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -15,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.grindbuddy.components.ChallengeCard
 import com.example.grindbuddy.data.FocusSession
 import com.example.grindbuddy.presentation.theme.GrindSurface
 import com.example.grindbuddy.presentation.theme.GrindWhite
@@ -27,6 +30,15 @@ import java.util.Locale
 fun StatsScreen(
     history: List<FocusSession>,
     weeklyStats: List<Pair<String, Int>>,
+    minutesToday: Int,
+    dailyTarget: Int,
+    onClaimDaily: () -> Unit,
+    minutesThisWeek: Int,
+    weeklyTarget: Int,
+    onClaimWeekly: () -> Unit,
+    currentStreak: Int,
+    streakTarget: Int,
+    onClaimStreak: () -> Unit,
     onBackClick: () -> Unit
 ) {
     // 1. STATE: Which tab is selected? (0 = Weekly, 1 = Monthly, 2 = History)
@@ -78,6 +90,42 @@ fun StatsScreen(
             1 -> MonthlyGraphView() // Monthly (Placeholder)
             2 -> HistoryListView(history) // The List
         }
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) { // <--- ADD SCROLLING!
+            WeeklyGraphView(weeklyStats)
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("🏆 ACTIVE QUESTS", color = Color.White, fontWeight = FontWeight.Bold)
+
+            // 1. Daily Card
+            ChallengeCard(
+                title = "Daily Grind",
+                description = "Study for ${dailyTarget} minutes today.",
+                currentProgress = minutesToday,
+                targetProgress = dailyTarget,
+                onClaimClick = onClaimDaily
+            )
+
+            // 2. Weekly Card (NEW)
+            ChallengeCard(
+                title = "Weekly Warrior",
+                description = "Study for ${weeklyTarget} minutes this week.",
+                currentProgress = minutesThisWeek,
+                targetProgress = weeklyTarget,
+                onClaimClick = onClaimWeekly
+            )
+
+            // 3. Streak Card (NEW)
+            ChallengeCard(
+                title = "Streak Master",
+                description = "Reach a ${streakTarget}-day streak.",
+                currentProgress = currentStreak,
+                targetProgress = streakTarget,
+                onClaimClick = onClaimStreak
+            )
+
+            Spacer(modifier = Modifier.height(20.dp)) // Extra space at bottom
+        }
+
     }
 }
 

@@ -45,10 +45,25 @@ fun Navigation( // You might want to rename this to "GrindNavigation" to match p
             // We need to collect the history from the ViewModel
             val history by viewModel.sessionHistory.collectAsState()
             val weeklyStats by viewModel.weeklyStats.collectAsState()
+            val minutesToday by viewModel.minutesToday.collectAsState()
+            val dailyTarget by viewModel.dailyTarget.collectAsState()
+            val minutesThisWeek by viewModel.minutesThisWeek.collectAsState()
+            val weeklyTarget by viewModel.weeklyTarget.collectAsState()
+            val currentStreak by viewModel.currentStreak.collectAsState()
+            val streakTarget by viewModel.streakTarget.collectAsState()
 
             StatsScreen(
                 history = history,
                 weeklyStats = weeklyStats,
+                minutesToday = minutesToday,
+                dailyTarget = dailyTarget,
+                onClaimDaily = { viewModel.claimDailyQuest() },
+                minutesThisWeek = minutesThisWeek,
+                weeklyTarget = weeklyTarget,
+                onClaimWeekly = { viewModel.claimWeeklyQuest() },
+                currentStreak = currentStreak,
+                streakTarget = streakTarget,
+                onClaimStreak = { viewModel.claimStreakQuest() },
                 onBackClick = { navController.popBackStack() }
             )
 
