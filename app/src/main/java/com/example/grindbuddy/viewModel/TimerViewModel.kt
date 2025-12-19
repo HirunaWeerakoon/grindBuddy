@@ -99,6 +99,9 @@ class TimerViewModel(
         if (streak < 3) 3 else streak + 3 // Simple rule: Keep chasing +3 days
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3)
 
+    val ownedItems = repository.ownedItems.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), setOf("skin_default"))
+    val equippedItem = repository.equippedItem.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "skin_default")
+
     fun claimWeeklyQuest() {
         viewModelScope.launch {
             repository.addXp(200)
@@ -257,6 +260,21 @@ class TimerViewModel(
         } else {
             // Case C: You missed a day (or it's your first day). Reset to 1.
             repository.updateStreak(1, today)
+        }
+
+    }
+    fun purchaseItem(item: com.example.grindbuddy.data.ShopItem) { // Use full name if needed to avoid conflict
+        viewModelScope.launch {
+            // Double check they have enough coins
+            if (totalCoins.value >= item.price) {
+                repository.buyItem(item.id, item.price)
+            }
+        }
+    }
+
+    fun selectItem(itemId: String) {
+        viewModelScope.launch {
+            repository.equipItem(itemId)
         }
     }
 }

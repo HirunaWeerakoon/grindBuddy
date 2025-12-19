@@ -19,6 +19,7 @@ import com.example.grindbuddy.components.MascotMood
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.grindbuddy.components.TimerCircle
 import com.example.grindbuddy.components.UserStatsBar
+import com.example.grindbuddy.data.SHOP_ITEMS
 import com.example.grindbuddy.presentation.Screen
 import com.example.grindbuddy.presentation.theme.PrimaryPurple
 import com.example.grindbuddy.presentation.theme.SoftBackground
@@ -40,6 +41,10 @@ fun TimerScreen(
 
     val level= (currentXp/100)+1
     val progress= (currentXp%100)/100f
+
+    val equippedId by viewModel.equippedItem.collectAsState()
+
+    val currentSkinColor = SHOP_ITEMS.find { it.id == equippedId }?.color ?: Color.Unspecified
 
 
     Column(
@@ -89,7 +94,10 @@ fun TimerScreen(
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier.fillMaxWidth()
         ) {
-            GrindMascot(mood = if (isTimerRunning) MascotMood.FOCUSED else MascotMood.HAPPY)
+            GrindMascot(
+                mood = if (isTimerRunning) MascotMood.FOCUSED else MascotMood.HAPPY,
+                tint = currentSkinColor
+            )
             Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = onStatsClick) {
                 Text(text="stat screen")

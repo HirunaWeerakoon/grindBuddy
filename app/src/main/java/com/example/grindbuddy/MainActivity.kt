@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.grindbuddy.presentation.Navigation
-import com.example.grindbuddy.ui.ShopScreen
+import com.example.grindbuddy.presentation.ShopScreen
 import com.example.grindbuddy.ui.TimerScreen
 import com.example.grindbuddy.ui.theme.GrindBuddyTheme
 import com.example.grindbuddy.viewmodel.TimerViewModel
@@ -50,6 +50,10 @@ class MainActivity : ComponentActivity() {
         GrindBuddyTheme {
             ShopScreen(
                 coins = 100,
+                ownedItems = setOf("skin_default"),
+                equippedId = "skin_default",
+                onBuyClick = {},
+                onEquipClick = {},
                 onBackClick = {}
             )
         }
